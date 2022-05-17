@@ -1,0 +1,4 @@
+KMTNet:
+BV are in Johnson
+I is calibrated wrt i (Sloan)
+Mathew made correction for I -> i
