@@ -97,3 +97,132 @@ def Martinez_cooling_Asymmetric(Bmags,Vmags,BmagsErr,VmagsErr):
         mbol_LErr.append(median-lower_quantile)
         
     return(mbol_med,mbol_UErr,mbol_LErr,color_mean,color_std,BC_med,BC_UErr,BC_LErr)
+
+def Layman1(mag1,mag2,mag1err,mag2err,range_eff,c0,c1,c2,rms,dates):
+    
+    '''Applies Laymans' bolometric correction of a second order polynomial
+    to mag1 and mag2 over the effective range provided. Use a Gaussian sampling
+    method to find the distribution of the bolometric magnitudes and uses their
+    IQR as  the uncertainty for the specifi mag'''
+    
+    import numpy as np
+    # Define 2nd order polynomial for BC
+    BC = lambda x: c0 + c1*x + c2*x**2
+    
+    # Compute only the colors that are within the specified range
+    lower = range_eff[0]
+    upper = range_eff[1]
+    
+    # Find the pair of magnitudes that are within the effective range
+    test_colors = mag1 - mag2
+    good_mags = []
+    for i,color in enumerate(test_colors):
+        if color < upper and color > lower:
+            good_mags.append(i)
+            
+    # Only select the pair mags that are within the effective range of color
+    mag1 = mag1[good_mags]
+    mag2 = mag2[good_mags]
+    
+    # And the corresponding dates
+    dates = dates[good_mags]
+    
+    color_med = []
+    color_std = []
+    
+    BC_med = []
+    BC_UErr = []
+    BC_LErr = []
+    
+    mbol_med = []
+    mbol_UErr = []
+    mbol_LErr = []
+    
+    for i in range(len(mag1)):
+        s_mag1 = np.random.normal(loc=mag1[i],scale=mag1err[i],size=1000)
+        s_mag2 = np.random.normal(loc=mag2[i],scale=mag2err[i],size=1000)
+        
+        s_color = s_mag1-s_mag2
+        color_med.append(np.median(s_color))
+        color_std.append(np.std(s_color))
+        
+        s_BC = BC(s_color)
+        BC_med.append(np.median(s_BC))
+        BC_uq = np.percentile(s_BC,75)
+        BC_lq = np.percentile(s_BC,25)
+        BC_UErr.append(BC_uq-np.median(s_BC))
+        BC_LErr.append(np.median(s_BC)-BC_lq)
+        
+        s_mbol = s_BC + s_mag1
+        mbol_med.append(np.median(s_mbol))
+        mbol_uq = np.percentile(s_mbol,75)
+        mbol_lq = np.percentile(s_mbol,25)
+        mbol_UErr.append(mbol_uq-np.median(s_mbol))
+        mbol_LErr.append(np.median(s_mbol)-mbol_lq)
+        
+    return(mbol_med,mbol_UErr,mbol_LErr,color_med,color_std,BC_med,BC_UErr,BC_LErr,dates)
+    
+def Layman2(mag1,mag2,mag1err,mag2err,range_eff,c0,c1,c2,rms,dates):
+    
+    '''Applies Laymans' bolometric correction of a second order polynomial
+    to mag1 and mag2 over the effective range provided. Use a Gaussian sampling
+    method to find the distribution of the bolometric magnitudes and uses their
+    IQR as  the uncertainty for the specifi mag'''
+    
+    import numpy as np
+    # Define 2nd order polynomial for BC
+    BC = lambda x: c0 + c1*x + c2*x**2
+    
+    # Compute only the colors that are within the specified range
+    lower = range_eff[0]
+    upper = range_eff[1]
+    
+    # Find the pair of magnitudes that are within the effective range
+    test_colors = mag1 - mag2
+    good_mags = []
+    for i,color in enumerate(test_colors):
+        if color < upper and color > lower:
+            good_mags.append(i)
+            
+    # Only select the pair mags that are within the effective range of color
+    #mag1 = mag1[good_mags]
+    #mag2 = mag2[good_mags]
+    
+    # And the corresponding dates
+    #dates = dates[good_mags]
+    
+    color_med = []
+    color_std = []
+    
+    BC_med = []
+    BC_UErr = []
+    BC_LErr = []
+    
+    mbol_med = []
+    mbol_UErr = []
+    mbol_LErr = []
+    
+    for i in range(len(mag1)):
+        s_mag1 = np.random.normal(loc=mag1[i],scale=mag1err[i],size=1000)
+        s_mag2 = np.random.normal(loc=mag2[i],scale=mag2err[i],size=1000)
+        
+        s_color = s_mag1-s_mag2
+        color_med.append(np.median(s_color))
+        color_std.append(np.std(s_color))
+        
+        s_BC = BC(s_color)
+        BC_med.append(np.median(s_BC))
+        BC_uq = np.percentile(s_BC,75)
+        BC_lq = np.percentile(s_BC,25)
+        BC_UErr.append(BC_uq-np.median(s_BC))
+        BC_LErr.append(np.median(s_BC)-BC_lq)
+        
+        s_mbol = s_BC + s_mag1
+        mbol_med.append(np.median(s_mbol))
+        mbol_uq = np.percentile(s_mbol,75)
+        mbol_lq = np.percentile(s_mbol,25)
+        mbol_UErr.append(mbol_uq-np.median(s_mbol))
+        mbol_LErr.append(np.median(s_mbol)-mbol_lq)
+        
+    return(mbol_med,mbol_UErr,mbol_LErr,color_med,color_std,BC_med,BC_UErr,BC_LErr,dates)
+    
