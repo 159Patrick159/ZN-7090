@@ -107,3 +107,32 @@ def Probe_sensitivity(colors,dc,cs):
         delta_C = (colors*dc - colors)
         per_BC = delta_BC/delta_C
         return(per_BC/dc)
+    
+def Remove_Data(dates,data,data_err,err_threshold,data_range):
+    
+    '''Removes data points that are outside the range and have
+    an uncertainty greater than the threshold. Data range is a list
+    of length 2 where the first entry is the lower bound and second
+    entry is the upper bound'''
+    
+    # Select bounds
+    upper_bound = data_range[1]
+    lower_bound = data_range[0]
+    
+    # Initialize empty array
+    good_data = []
+    
+    for i,val in enumerate(data):
+        # Check if data is within range
+        if val <= upper_bound and val >= lower_bound:
+            # Check if data point has an uncertainty greater than limit
+            if data_err[i] < err_threshold:
+                good_data.append(i)
+    
+    # Slice original data and dates to only contain points 
+    # that satisfy conditions
+    dates = dates[i]
+    data = data[i]
+    data_err = data_err[i]
+    
+    return(dates,data,data_err)
