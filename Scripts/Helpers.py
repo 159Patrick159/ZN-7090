@@ -76,3 +76,34 @@ def spot_interpolation(dates1,dates3):
     # Set operation allows us to isolate for interpolated dates
     inter_dates = dates3_set - dates3_set.intersection(matches_set)
     return(inter_dates)
+
+def Probe_sensitivity(colors,dc,cs):
+    
+    '''Probes for the sensitivity of a bolometric correction due to color,
+    cs is an array where the coefficients of the correction are stored
+    in order of highest polynomial'''
+    
+    # Check for length of polynomial
+    if len(cs) == 3:
+        # We are looking at a 2nd order polynomial
+        c0,c1,c2 = cs
+        BC = lambda x: c0 + c1*x + c2*x**2
+        
+        # Compute colors and their respecive changes
+        BC_Original = BC(colors)
+        BC_Change = BC(colors + colors*dc)
+        delta_BC = abs(BC_Change) - abs(BC_Original)
+        per_BC = delta_BC/BC_Original
+        return(abs(per_BC/dc))
+    
+    if len(cs) == 5:
+        # We are looking at a 4th order polynomail
+        c0, c1, c2, c3, c4 = cs
+        BC = lambda x: c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4
+        
+        BC_Original = BC(colors)
+        BC_Change = BC(colors + colors*dc)
+        delta_BC = (BC_Change - BC_Original)
+        delta_C = (colors*dc - colors)
+        per_BC = delta_BC/delta_C
+        return(per_BC/dc)
