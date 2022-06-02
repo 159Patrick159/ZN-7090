@@ -122,6 +122,7 @@ def Remove_Data(dates,data,data_err,err_threshold,data_range):
     # Initialize empty array
     good_data = []
     
+    
     for i,val in enumerate(data):
         # Check if data is within range
         if val <= upper_bound and val >= lower_bound:
