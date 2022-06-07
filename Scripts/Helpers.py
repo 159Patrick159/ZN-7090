@@ -138,28 +138,36 @@ def Remove_Data(dates,data,data_err,err_threshold,data_range):
     
     return(dates,data,data_err)
 
-def HO_PolyFit(dates,mags,mags_err):
+def HO_PolyFit(dates,mags,mags_err,N):
     
     '''Performs a non-linear least square fit on a polynomial
     of degree 7 for a given light curve. It return the upper
     lower and mean fit parameteres for given fit.'''
     
     from scipy.optimize import curve_fit
-    
+    import numpy as np
     # Define high order polynomial 
     def polynomial_7(x,c0,c1,c2,c3,c4,c5,c6,c7):
         return(c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4 + c5*x**5 + c6*x**6 + c7*x**7)
+
+    # Create array for sampled data
+    big_data = []
+    for i in range(len(mags)):
+        # Sample N points from Gaussian distribution
+        mag_s = np.random.normal(loc=mags[i],scale=mags_err[i],size=N)
+        big_data.append(mag_s)
+
+    # Every row represents a sample froma single data point.
+    big_data = np.array(big_data)
+
+    # We transprose the matrix to get every row to represent the sampled light curve
+    big_data = big_data.T
+
+    # Fit the rows of data
+    coeffs=[]
+    for row in big_data:
+        popt,pcov = curve_fit(polynomial_7,dates,row)
+        coeffs.append(popt)
+    mean_coeffs = np.mean(coeffs,axis=0)
     
-    # Perform least square fitting
-    popt, pcov = curve_fit(polynomial_7,dates,mags,sigma=mags_err,absolute_sigma=True)
-    
-    # Find upper and lower bounds for data
-    mags_lower = mags - mags_err
-    mags_upper = mags + mags_err
-    
-    # Perform the least square fitting on these bounds
-    poptL, pcovL = curve_fit(polynomial_7,dates,mags_lower)
-    poptU, pcovU = curve_fit(polynomial_7,dates,mags_upper)
-    
-    # Return the fitting parameters
-    return(popt,poptU,poptL)
+    return(mean_coeffs,coeffs)
