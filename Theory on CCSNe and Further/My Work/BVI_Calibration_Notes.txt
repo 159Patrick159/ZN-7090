@@ -2,3 +2,16 @@ KMTNet:
 BV are in Johnson
 I is calibrated wrt i (Sloan)
 Mathew made correction for I -> i
+Mag difference with two filters (offset of 0.4mag)
+I and i are not interchangeable (apply conversion between filters)
+
+
+To improve
+Be more descriptive in figures,
+Reference files where data comes from
+Be more quantitative with choosing the bolometric correction
+Mention I/i filter difference
+Power law fitting! 
+
+If have time:
+estimate physical parameters
