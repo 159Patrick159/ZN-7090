@@ -171,3 +171,38 @@ def HO_PolyFit(dates,mags,mags_err,N):
     mean_coeffs = np.mean(coeffs,axis=0)
     
     return(mean_coeffs,coeffs)
+
+def Match_Lengths(d1,d2):
+    import numpy as np
+    '''Appends NaN to smallter lenght data set such that both arrays
+    have equal lengths. If both arrays have same length then both arrays
+    are returned untouched.'''
+    
+    l1,l2 = len(d1),len(d2)
+    
+    if l1 > l2:
+        #d2 = np.append(d2, np.repeat(np.nan, l1-l2))
+        d2 = np.append(d2, np.repeat(None, l1-l2))
+    else:
+        #d1 = np.append(d1,np.repeat(np.nan, l2-l1))
+        d1 = np.append(d1,np.repeat(None, l2-l1))
+        
+    return(d1,d2)
+    
+def combine_data(d1,d2,d3):
+    
+    '''Combine 3 data set into a single array where index corresponds to their band 0 for B,
+    1 for V and 2 for I. If arrays are different lengths then arrays are filled in with NaN'''
+    
+    # Ensure all arrays are of the same size
+    d1, d2 = Match_Lengths(d1,d2)
+    d1, d3 = Match_Lengths(d1,d3)
+    d2, d3 = Match_Lengths(d2,d3) 
+    
+    result = []
+    
+    # Append all data into lists
+    result.append(d1)
+    result.append(d2)
+    result.append(d3)
+    return(result)
