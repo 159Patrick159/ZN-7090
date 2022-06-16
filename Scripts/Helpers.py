@@ -97,7 +97,7 @@ def Probe_sensitivity(colors,dc,cs):
         return(abs(per_BC/dc))
     
     if len(cs) == 5:
-        # We are looking at a 4th order polynomail
+        # We are looking at a 4th order polynomial
         c0, c1, c2, c3, c4 = cs
         BC = lambda x: c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4
         
