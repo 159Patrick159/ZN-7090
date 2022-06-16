@@ -7,11 +7,12 @@ I and i are not interchangeable (apply conversion between filters)
 
 
 To improve
-Be more descriptive in figures,
-Reference files where data comes from
+Be more descriptive in figures, X
+Reference files where data comes from X
 Be more quantitative with choosing the bolometric correction
-Mention I/i filter difference
-Power law fitting! 
+Mention I/i filter difference X
+Inlcude more equation (bolometric corrections) X
+Power law fitting! X
 
 If have time:
 estimate physical parameters
