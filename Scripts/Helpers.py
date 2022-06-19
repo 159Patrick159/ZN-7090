@@ -138,18 +138,16 @@ def Remove_Data(dates,data,data_err,err_threshold,data_range):
     
     return(dates,data,data_err)
 
-def HO_PolyFit(dates,mags,mags_err,N):
+def HO_PolyFit(dates,mags,mags_err,N,deg):
     
     '''Performs a non-linear least square fit on a polynomial
-    of degree 7 for a given light curve. It return the upper
-    lower and mean fit parameteres for given fit.'''
+    of degree 6 or 7 through a montecarlo simulation for sampling 
+    on the data points. Returns the averaged coeff and the coeff
+    of each monte carlo simulation'''
     
     from scipy.optimize import curve_fit
     import numpy as np
-    # Define high order polynomial 
-    def polynomial_7(x,c0,c1,c2,c3,c4,c5,c6,c7):
-        return(c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4 + c5*x**5 + c6*x**6 + c7*x**7)
-
+    
     # Create array for sampled data
     big_data = []
     for i in range(len(mags)):
@@ -162,15 +160,33 @@ def HO_PolyFit(dates,mags,mags_err,N):
 
     # We transprose the matrix to get every row to represent the sampled light curve
     big_data = big_data.T
-
-    # Fit the rows of data
-    coeffs=[]
-    for row in big_data:
-        popt,pcov = curve_fit(polynomial_7,dates,row)
-        coeffs.append(popt)
-    mean_coeffs = np.mean(coeffs,axis=0)
     
-    return(mean_coeffs,coeffs)
+    #Check for degree polynomial
+    if deg == 6:
+        # Define high order polynomial 
+        def polynomial_6(x,c0,c1,c2,c3,c4,c5,c6,c7):
+            return(c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4 + c5*x**5 + c6*x**6)
+
+        # Fit the rows of data
+        coeffs=[]
+        for row in big_data:
+            popt,pcov = curve_fit(polynomial_6,dates,row)
+            coeffs.append(popt)
+        mean_coeffs = np.mean(coeffs,axis=0)
+        return(mean_coeffs,coeffs)
+    
+    if deg == 7:
+        # Define high order polynomial 
+        def polynomial_7(x,c0,c1,c2,c3,c4,c5,c6,c7):
+            return(c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4 + c5*x**5 + c6*x**6 + c7*x**7)
+
+        # Fit the rows of data
+        coeffs=[]
+        for row in big_data:
+            popt,pcov = curve_fit(polynomial_7,dates,row)
+            coeffs.append(popt)
+        mean_coeffs = np.mean(coeffs,axis=0)
+        return(mean_coeffs,coeffs)
 
 def Match_Lengths(d1,d2):
     import numpy as np
