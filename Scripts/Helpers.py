@@ -92,9 +92,10 @@ def Probe_sensitivity(colors,dc,cs):
         # Compute colors and their respecive changes
         BC_Original = BC(colors)
         BC_Change = BC(colors + colors*dc)
-        delta_BC = abs(BC_Change) - abs(BC_Original)
-        per_BC = delta_BC/BC_Original
-        return(abs(per_BC/dc))
+        delta_BC = (BC_Change - BC_Original)
+        delta_C = (colors*dc - colors)
+        per_BC = delta_BC/delta_C
+        return(per_BC/dc)
     
     if len(cs) == 5:
         # We are looking at a 4th order polynomial
@@ -164,7 +165,7 @@ def HO_PolyFit(dates,mags,mags_err,N,deg):
     #Check for degree polynomial
     if deg == 6:
         # Define high order polynomial 
-        def polynomial_6(x,c0,c1,c2,c3,c4,c5,c6,c7):
+        def polynomial_6(x,c0,c1,c2,c3,c4,c5,c6):
             return(c0 + c1*x + c2*x**2 + c3*x**3 + c4*x**4 + c5*x**5 + c6*x**6)
 
         # Fit the rows of data
