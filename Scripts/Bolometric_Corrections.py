@@ -148,7 +148,7 @@ def Layman2Luminosity(mag1,mag2,mag1err,mag2err,c0,c1,c2,z):
     val = integrate.quad(func,0,z,args=(OM,OK,OL))
 
     # Using H = 67.5 (+/-) 0.5 km/s/Mpc
-    H = (67.5*u.km/u.s/u.Mpc).to(1/u.s) # 1/s
+    H = (73.24*u.km/u.s/u.Mpc).to(1/u.s) # 1/s
     DC = c/H *val
     DL = DC*(1+z)
     Dl, Dl_err = (DL[0].to(u.pc)).value, DL[1]
@@ -161,6 +161,7 @@ def Layman2Luminosity(mag1,mag2,mag1err,mag2err,c0,c1,c2,z):
     L_med = []
     L_UErr = []
     L_LErr = []
+    L_Err = []
     
     for i in range(len(mag1)):
         s_mag1 = np.random.normal(loc=mag1[i],scale=mag1err[i],size=1000)
@@ -169,15 +170,17 @@ def Layman2Luminosity(mag1,mag2,mag1err,mag2err,c0,c1,c2,z):
         s_color = s_mag1-s_mag2
         s_BC = BC(s_color)
         s_mbol = s_BC + s_mag1
-        s_Mbol = s_mbol - np.log10(Dl/(10))
-        s_Lbol = Lsun*10**(0.4*(Msun - s_Mbol)) 
+        s_Mbol = s_mbol - 5*np.log10(Dl/(10))
+        s_Lbol = Lsun*100**((Msun - s_Mbol)/5) 
         
         # Noting that the distribution is assymetric we will use the median and 50% CI
         L_med.append(np.median(s_Lbol))
         L_UErr.append(np.percentile(s_Lbol,75)-np.median(s_Lbol))
         L_LErr.append(np.median(s_Lbol) - np.percentile(s_Lbol,25))
+        #L_Err.append(np.std(s_Lbol))
         
     return(L_med,[L_LErr,L_UErr])
+    #return(L_med,L_Err)
     
 def Layman_BC(mag1,mag2,mag1err,mag2err,range_eff,c0,c1,c2,rms,dates):
     
