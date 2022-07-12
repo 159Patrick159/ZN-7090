@@ -161,7 +161,7 @@ def Layman2Luminosity(mag1,mag2,mag1err,mag2err,c0,c1,c2,z):
     L_med = []
     L_UErr = []
     L_LErr = []
-    L_Err = []
+    #L_Err = []
     
     for i in range(len(mag1)):
         s_mag1 = np.random.normal(loc=mag1[i],scale=mag1err[i],size=1000)
