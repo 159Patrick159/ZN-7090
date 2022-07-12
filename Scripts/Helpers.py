@@ -223,3 +223,108 @@ def combine_data(d1,d2,d3):
     result.append(d2)
     result.append(d3)
     return(result)
+
+def MC_Simulation_Graph(mag1,mag2,mag1_err,mag2_err,c0,c1,c2,Dl,index):
+    """
+    Simulate a Gaussian sampling over the specified magnitudes and uncertainties
+    and produces three historgram otlining the disitribuion of the apparet, absolute
+    magnitudes and the bolometric luminosity. Additionally it prints the Pearson's
+    Median Skeness of the bolometric luminosity distribution. Note: the luminosity 
+    distance needs to be in units of parsecs.
+    """
+    # Import needed libraries
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    # Define Bolometric correction given coefficients
+    BC = lambda x: c0 + c1*x + c2*x**2
+    
+    # Define physical parameters of sun
+    Lsun = 3.845e33
+    Msun = 4.74
+    
+    fig = plt.figure(figsize=(15,5))
+    a0 = plt.subplot(1,3,1)
+    a1 = plt.subplot(1,3,2)
+    a2 = plt.subplot(1,3,3)
+    
+    for i in range(index,index+1):
+        s_mag1 = np.random.normal(loc=mag1[i],scale=mag1_err[i],size=1000)
+        s_mag2 = np.random.normal(loc=mag2[i],scale=mag2_err[i],size=1000)
+
+        s_color = s_mag1-s_mag2
+        s_BC = BC(s_color)
+        s_mbol = s_BC + s_mag1
+        s_Mbol = s_mbol - np.log10((Dl/10))
+        s_Lbol = (Lsun*10**(0.4*(Msun - s_Mbol)))
+
+        # Calculate statistical significant parameters
+        mbol_lq = np.percentile(s_mbol,25)
+        mbol_uq = np.percentile(s_mbol,75)
+
+        Mbol_lq = np.percentile(s_Mbol,25)
+        Mbol_uq = np.percentile(s_Mbol,75)
+
+        Lbol_lq = np.percentile(s_Lbol,25)
+        Lbol_uq = np.percentile(s_Lbol,75)
+        Lbol_med = np.median(s_Lbol)
+        Lbol_mean = np.mean(s_Lbol)
+        Lbol_std = np.std(s_Lbol)
+        
+        a0.hist(s_mbol, bins = 'fd',density=True, color = 'k', histtype = 'step', alpha = 0.5)
+        a0.plot(s_mbol, np.full_like(s_mbol, -0.01), '|k', markeredgewidth = 1, alpha = 0.2)
+        a0.axvline(x = mbol_lq, color = 'k', label = '50% CI', linestyle = '--')
+        a0.axvline(x = mbol_uq, color = 'k', linestyle = '--')
+        a0.set_xlabel("Bolometric Apparent Mag",fontsize=14)
+        a0.set_ylabel("Probability Density",fontsize=14)
+        a0.legend(prop={'size':9})
+
+        a1.hist(s_Mbol, bins = 'fd',density=True, color = 'k', histtype = 'step', alpha = 0.5)
+        a1.plot(s_Mbol, np.full_like(s_Mbol, -0.01), '|k', markeredgewidth = 1, alpha = 0.2)
+        a1.axvline(x = Mbol_lq, color = 'k', label = '50% CI', linestyle = '--')
+        a1.axvline(x = Mbol_uq, color = 'k', linestyle = '--')
+        a1.set_xlabel("Bolometric Absolute Mag",fontsize=14)
+        a1.set_ylabel("Probability Density",fontsize=14)
+        a1.legend(prop={'size':9})
+                                   
+        a2.hist(s_Lbol, bins = 'fd',density=True, color = 'k', histtype = 'step', alpha = 0.5)
+        a2.axvline(x = Lbol_lq, color = 'k', label = '50% CI', linestyle = '--')
+        a2.axvline(x = Lbol_uq, color = 'k', linestyle = '--')
+        a2.axvline(x = Lbol_med, color = 'r', label = 'Median', linestyle = '-',linewidth=0.9)
+        a2.axvline(x = Lbol_mean,color='orange',label='Mean',linewidth=0.9)
+        a2.axvline(x = Lbol_mean + Lbol_std,color='b',label='Std',alpha=0.5,ls="-.")
+        a2.plot(s_Lbol, np.full_like(s_Lbol, 0.17e-31), '|k', markeredgewidth = 1, alpha = 0.1)
+        a2.axvline(x = Lbol_mean - Lbol_std,color='b',alpha=0.5,ls="-.")
+        a2.set_xlabel("Bolometric Luminosity",fontsize=14)
+        a2.set_ylabel("Probability Density",fontsize=14)
+        a2.legend(prop={'size':9}) 
+        plt.tight_layout()
+        plt.show()
+        print("Pearson's Median Skewness of Bolometric Luminosity Distribution")
+        print(3*(Lbol_mean - Lbol_med)/Lbol_std)
+
+def MC_Simulation_Array(mag1,mag2,mag1_err,mag2_err,c0,c1,c2,Dl,index):
+    """
+    Performs Gaussian sampling on specified magnitudes to compute the bolometric apparent, absolute
+    magnitudes and luminosity. Function returns the correspond arrays for the specified data point
+    from index parameter.
+    """
+    import numpy as np
+    
+    # Define Bolometric correction given coefficients
+    BC = lambda x: c0 + c1*x + c2*x**2
+    
+    # Define physical parameters of sun
+    Lsun = 3.845e33
+    Msun = 4.74
+    
+    s_mag1 = np.random.normal(loc=mag1[index],scale=mag1_err[index],size=1000)
+    s_mag2 = np.random.normal(loc=mag2[index],scale=mag2_err[index],size=1000)
+
+    s_color = s_mag1-s_mag2
+    s_BC = BC(s_color)
+    s_mbol = s_BC + s_mag1
+    s_Mbol = s_mbol - np.log10((Dl/10))
+    s_Lbol = (Lsun*10**(0.4*(Msun - s_Mbol)))
+
+    return(s_mbol,s_Mbol,s_Lbol)
