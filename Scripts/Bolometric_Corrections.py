@@ -194,7 +194,89 @@ def Layman2Luminosity(mag1,mag2,mag1err,mag2err,c0,c1,c2,z,dist=None):
     
     # Return Med and IQR if dist. is A
     return(L_med,[L_LErr,L_UErr])
+
+
+def Layman2Luminosity2(mag1,mag2,mag1err,mag2err,eff_range,c0,c1,c2,z,dist=None):
     
+    '''Applies Laymans' bolometric correction of a second order polynomial
+    to mag1 and mag2 to find the apparent bolometric correction. Consequently 
+    it uses given redshift to compute the absolute magntiude and bolometric
+    luminosity. Function uses IQR if dist is assymetric "A" or std if 
+    distribution is symmetric "S".'''
+    
+    import numpy as np
+    import scipy.integrate as integrate
+    import astropy.units as u
+    from astropy.constants import c
+    
+    # Define cosmological density parameters
+    OM = 0.27
+    OK = 0.00
+    OL = 0.73
+    
+    # Define bolometric values for sun
+    Lsun = 3.846e33
+    Msun = 4.74
+    
+    # Define function for comoving distance computation
+    def func(z,M,K,L):
+        return(1/np.sqrt(M*(1+z)**3 + K*(1+z)**2 + L))
+    
+    # Perform numerical integration for Dc
+    val = integrate.quad(func,0,z,args=(OM,OK,OL))
+
+    # Using H = 67.5 (+/-) 0.5 km/s/Mpc
+    H = (73.24*u.km/u.s/u.Mpc).to(1/u.s) # 1/s
+    DC = c/H *val
+    DL = DC*(1+z)
+    Dl, Dl_err = (DL[0].to(u.pc)).value, DL[1]
+    
+    # Define 2nd order polynomial for BC
+    BC = lambda x: c0 + c1*x + c2*x**2
+    
+
+    # Initialize empty arrays for magnitudes
+    L_med = []
+    L_UErr = []
+    L_LErr = []
+    L_mean = []
+    L_Err = []
+    bad_ones = []
+    
+    flag = False
+    for i in range(len(mag1)):
+        # Check if color is within effective range
+        if mag1[i]-mag2[i] < eff_range[0] or mag1[i]-mag2[i] > eff_range[1]:
+            bad_ones.append(i)
+            continue
+        
+        s_mag1 = np.random.normal(loc=mag1[i],scale=mag1err[i],size=1000)
+        s_mag2 = np.random.normal(loc=mag2[i],scale=mag2err[i],size=1000)
+        
+        s_color = s_mag1-s_mag2
+        s_BC = BC(s_color)
+        s_mbol = s_BC + s_mag1
+        s_Mbol = s_mbol - 5*np.log10(Dl/(10))
+        s_Lbol = Lsun*100**((Msun - s_Mbol)/5) 
+        
+        
+        # Noting that the distribution is assymetric we will use the median and 50% CI
+        if dist == "S":
+            L_mean.append(np.mean(s_Lbol))
+            L_Err.append(np.std(s_Lbol))
+            flag = True
+            
+        if dist == "A":
+            L_med.append(np.median(s_Lbol))
+            L_UErr.append(np.percentile(s_Lbol,75)-np.median(s_Lbol))
+            L_LErr.append(np.median(s_Lbol) - np.percentile(s_Lbol,25))
+        
+    # Return Mean and Std if dist. is S
+    if flag:
+        return(L_mean,L_Err,bad_ones)
+    
+    # Return Med and IQR if dist. is A
+    return(L_med,[L_LErr,L_UErr],bad_ones)  
     
 def Layman_BC(mag1,mag2,mag1err,mag2err,range_eff,c0,c1,c2,rms,dates):
     
