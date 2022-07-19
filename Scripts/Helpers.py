@@ -1,4 +1,9 @@
-# Create a class that keeps track of a specific date and the corresponding residual
+# Import needed libraries
+import numpy as np
+import copy
+import math
+
+#Create a class that keeps track of a specific date and the corresponding residual
 class Date:
     def __init__(self, Day, Res):
         self.d = Day
@@ -9,11 +14,8 @@ def spot_interpolation(dates1,dates3):
     
     '''Returns the indices of the dates where there was interpolation
     dates1 is the original data, dates2 is the data we want dates1 to look like
-    and dates3 is the interpolation of dates1'''
-    
-    import copy
-    import math
-    import numpy as np
+    and dates3 is the interpolation of dates1
+    '''
     
     # Check if dates array are of correct sizes
     N1, N3 = len(dates1), len(dates3)
@@ -147,7 +149,6 @@ def HO_PolyFit(dates,mags,mags_err,N,deg):
     of each monte carlo simulation'''
     
     from scipy.optimize import curve_fit
-    import numpy as np
     
     # Create array for sampled data
     big_data = []
@@ -190,7 +191,6 @@ def HO_PolyFit(dates,mags,mags_err,N,deg):
         return(mean_coeffs,coeffs)
 
 def Match_Lengths(d1,d2):
-    import numpy as np
     '''Appends NaN to smallter lenght data set such that both arrays
     have equal lengths. If both arrays have same length then both arrays
     are returned untouched.'''
@@ -234,7 +234,6 @@ def MC_Simulation_Graph(mag1,mag2,mag1_err,mag2_err,c0,c1,c2,Dl,index):
     """
     # Import needed libraries
     import matplotlib.pyplot as plt
-    import numpy as np
     
     # Define Bolometric correction given coefficients
     BC = lambda x: c0 + c1*x + c2*x**2
@@ -328,3 +327,85 @@ def MC_Simulation_Array(mag1,mag2,mag1_err,mag2_err,c0,c1,c2,Dl,index):
     s_Lbol = (Lsun*10**(0.4*(Msun - s_Mbol)))
 
     return(s_mbol,s_Mbol,s_Lbol)
+
+def Mag2Luminosity(mag,mag_err,Dl):
+    """
+    Converts observed magntiudes to luminosities by applying the luminosity distance
+    and the distance modulus equation. Dl needs to be in units of pc
+    """
+    
+    # Initialize needed constants
+    Lsun = 3.845e33 
+    Msun = 4.74
+    
+    mtop = mag+mag_err
+    
+    # Convert to absolute magnitude
+    M = mag - 5*np.log10(Dl/(10))
+    Mtop = mtop - 5*np.log10(Dl/(10))
+    # Convert to luminosity
+    L = (Lsun*100**((Msun - M)/5))
+    Ltop = (Lsun*100**((Msun - Mtop)/5))
+    
+    return(L,L-Ltop)
+
+def RabinakShockCooling(t5,E51,R13,M,k34,fp):
+    # Define needed constants
+    h = 6.6260755e-27 #erg*s
+    c = 2.99792458e10 #cm/s
+    
+    # Compute Photospheric Temperature
+    Tph = 1.6*(fp**(-0.037)*E51**0.027*R13**(1/4))/(M**0.054*k34**0.28) * t5**(-0.45)
+    
+    # Compute Bolometric Luminosity
+    L = 8.5e42*(E51**0.92*R13)/(fp**0.27*M**0.84*k34**0.92)*t5**(-0.16)
+    
+    return(L,Tph)
+
+#function: stefan Boltzmann's law
+def SBlaw(T):
+    sb = 5.67051e-5 #erg/s/cm2/K4
+    #black body total flux
+    integ = sb*np.power(T,4) #ergs/s/cm2
+    return integ
+
+def blackbod(x, T):
+    # Change units of wavelength to cgs
+    wave = x*1e-8 #angstrom to cm
+    
+    # Define physical constants
+    h = 6.6260755e-27 #erg*s
+    c = 2.99792458e10 #cm/s
+    k = 1.380658e-16 #erg/K
+    freq = c/wave #Hz
+    
+    # Define spectral radiance from planck distribution
+    p_rad = (2*h*freq**3/c**2)/(np.exp(h*freq/(k*T))-1.0) #erg/s/cm2/rad2/Hz power per area per solid angle per frequency
+    
+    # Integrat planck distribution over solid angle
+    p_int = np.pi*p_rad #erg/s/cm2/Hz #power per area per frequency [fnu]
+    return p_int
+
+#function: normalized planck distribution (wavelength)
+def planck(x, T):
+    #black body total flux
+    integ = SBlaw(T) #erg/s/cm2
+    #blackbody distribution
+    p_int = blackbod(x,T) #erg/s/cm2/Hz #power per area per frequency [fnu]
+    #normalized planck distribution
+    return (p_int/integ) #1/Hz, luminosity density
+
+#function: L, T fluxes derived using blackbody spectrum
+def BBflux(Lc,Teff,wave,z,dl):
+    #give wave in observer frame
+    
+    #luminosity distance [pc -> cm]
+    dl = dl*3.086*10**18
+    Area = 4.0*np.pi*np.square(dl) #cm^2
+    #kasen model in observer band
+    Lc_wave = planck(wave/(1.0+z),Teff)*Lc/Area
+    #Lc_angle_wave = np.nan_to_num(Lc_angle_wave)
+    #ergs/s/Hz/cm^2, luminosity density in observer frame
+    #return in uJy, 10**29 uJy = 1 ergs/s/Hz/cm^2
+    return Lc_wave*10**29
+    
