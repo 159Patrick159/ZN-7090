@@ -367,11 +367,12 @@ def SBlaw(T):
     sb = 5.67051e-5 #erg/s/cm2/K4
     #black body total flux
     integ = sb*np.power(T,4) #ergs/s/cm2
-    return integ
+    return (integ)
 
 def blackbod(x, T):
     # Change units of wavelength to cgs
-    wave = x*1e-8 #angstrom to cm
+    #wave = x*1e-8 #angstrom to cm
+    wave = x
     
     # Define physical constants
     h = 6.6260755e-27 #erg*s
@@ -384,7 +385,7 @@ def blackbod(x, T):
     
     # Integrat planck distribution over solid angle
     p_int = np.pi*p_rad #erg/s/cm2/Hz #power per area per frequency [fnu]
-    return p_int
+    return (p_int)
 
 #function: normalized planck distribution (wavelength)
 def planck(x, T):
@@ -397,6 +398,10 @@ def planck(x, T):
 
 #function: L, T fluxes derived using blackbody spectrum
 def BBflux(Lc,Teff,wave,z,dl):
+    '''
+    Return flux density per unit frequency given theoretical
+    bolometric luminosity and temperature expressions.
+    '''
     #give wave in observer frame
     
     #luminosity distance [pc -> cm]
@@ -406,6 +411,11 @@ def BBflux(Lc,Teff,wave,z,dl):
     Lc_wave = planck(wave/(1.0+z),Teff)*Lc/Area
     #Lc_angle_wave = np.nan_to_num(Lc_angle_wave)
     #ergs/s/Hz/cm^2, luminosity density in observer frame
-    #return in uJy, 10**29 uJy = 1 ergs/s/Hz/cm^2
-    return Lc_wave*10**29
+    # Lc is in erg/s so Lc_wave is in erg/s/cm2/Hz
+    return (Lc_wave)
     
+def chi_square(y_measured, y_expected,errors):
+    return np.sum( np.power((y_measured - y_expected),2) / np.power(errors,2) )
+
+def chi_square_reduced(y_measured,y_expected,errors,number_parameters):
+    return chi_square(y_measured,y_expected,errors)/(len(y_measured - number_parameters))
