@@ -1,0 +1,26 @@
+Observatioal Papers Notes:
+
+Typical Paper Layout:
+1) Intro
+2) Observations
+2.1) Photometry
+2.2) Spectroscopy
+2.3) Host Galaxy
+3) Results
+4) Conclusions
+
+Results Section:
+- Characterization of light curves
+	- V band decline rate
+	- Peak magnitudes
+	- Comparison between other known SNe
+
+On SBO Theory
+SBO and Post-Break out cooling emission are sensitive to
+	- Progenitor Radius
+	- Ratio of ejecta energy and ejecta mass
+	- Opacity
+This early stage of light curve is independent of density profiles of progenitor
+
+
+

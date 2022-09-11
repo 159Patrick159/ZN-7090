@@ -1,0 +1,16 @@
+Meeting Notes:
+
+2022-06-17
+- Implement polynomial fitting to color and bolometric correction plots
+	- This will help smoothing the bolometric light and improve errors
+- Write up results descriptively
+- Explain why I chose 2D power fit over all other options (HO extrapolation is not frequently seen in literature due to its prone to divergence)
+- Read observational papers on SNe and learn how they apply theoretical models to observations
+
+2022-06-21
+- Read on papers of Type II-L SNe
+	- Prepare a summary on this ^
+- Read on paper on theory and models for Type II-SNe LC
+- Read on observation papers on SNe and learn how models are applied to observations
+- Clearly define research goals (parameters I need to calculate) 
+- Use a Z=0.1 for models (make functions automatic) in case we need to change Z

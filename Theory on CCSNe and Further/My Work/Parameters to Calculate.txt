@@ -1,0 +1,13 @@
+Parameters to Calculate:
+
+Progenitor Parameters
+R: Progenitor Radius
+M: Progenitor Mass 
+
+Explosion Parameters
+texp: Explosion Epoch (already found but its a very common parameter to present)
+E: Energy deposited in the ejecta
+Vs: Shock Velocity
+Mej: Ejecta Mass
+
+n=3 because EOS for exploding RSG

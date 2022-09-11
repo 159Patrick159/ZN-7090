@@ -1,6 +1,0 @@
-alias ds9v= ds9 -scale=zcale 
-
-=============Import Notes for Spectroscopy===========================
-
-On Dec 2020 we acquire spectrum of source (Mathews has looked at this)
-On June 2022 KASI acquired
