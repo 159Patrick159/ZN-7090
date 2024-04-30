@@ -405,7 +405,7 @@ def BBflux(Lc,Teff,wave,z,dl):
     #give wave in observer frame
     
     #luminosity distance [pc -> cm]
-    dl = dl*3.086*10**18
+    # dl = dl*3.086*10**18
     Area = 4.0*np.pi*np.square(dl) #cm^2
     #kasen model in observer band
     Lc_wave = planck(wave/(1.0+z),Teff)*Lc/Area
@@ -418,4 +418,246 @@ def chi_square(y_measured, y_expected,errors):
     return np.sum( np.power((y_measured - y_expected),2) / np.power(errors,2) )
 
 def chi_square_reduced(y_measured,y_expected,errors,number_parameters):
-    return chi_square(y_measured,y_expected,errors)/(len(y_measured - number_parameters))
+    return chi_square(y_measured,y_expected,errors)/(len(y_measured) - number_parameters)
+
+def Nice_Plots():
+    import matplotlib.pyplot as plt
+    style = 'default'
+    tdir = 'in'
+
+    major=5
+    minor=3
+
+    font = 'serif'
+
+    plt.style.use(style)
+
+    plt.rcParams['xtick.direction'] = tdir
+    plt.rcParams['ytick.direction'] = tdir
+
+    plt.rcParams['xtick.major.size'] = major
+    plt.rcParams['xtick.minor.size'] = minor
+    plt.rcParams['ytick.major.size'] = major
+    plt.rcParams['ytick.minor.size'] = minor
+
+    plt.rcParams['font.family'] = font
+
+def day_mjd(day, year):
+    ################################################################
+    # Desc: Converts day of year float to mjd time.                #
+    # ------------------------------------------------------------ #
+    # Imports: astropy.time.(Time, TimeDelta)                      #
+    # ------------------------------------------------------------ #
+    # Input                                                        #
+    # ------------------------------------------------------------ #
+    #  day: float time in days since start of year YYYY            #
+    # year: int reference year YYYY                                #
+    # ------------------------------------------------------------ #
+    # Output                                                       #
+    # ------------------------------------------------------------ #
+    # time: float time format in mjd                               #
+    ################################################################
+    from astropy.time import Time, TimeDelta
+        
+    #create astropy time object
+    t_ref = str(year)+"-01-01T00:00:00.000"
+    t_ref = Time(t_ref, format='isot', scale='utc')
+    #create astropy time difference object
+    t_diff = TimeDelta(day, format='jd')
+    #return isot time
+    return (t_ref+t_diff).mjd
+
+def m2M(m,merr,z):
+    import numpy as np
+    import scipy.integrate as integrate
+    import astropy.units as u
+    from astropy.constants import c
+    from uncertainties import unumpy,ufloat
+    from uncertainties.umath import log
+
+    # Define cosmological density parameters and H0 as mathew did
+    OM = 0.27
+    OK = 0.00
+    OL = 0.73
+    H0 = (74.2*u.km/u.s/u.Mpc).to(1/u.s)
+
+    # # Parameters used by afsariard
+    # H0 = (67.4*u.km/u.s/u.Mpc).to(1/u.s)
+    # OM = 0.315
+    # OK = 0.00
+    # OL = 0.685
+
+    # Numerically integrate for the comoving distance at z
+    def func(z,M,K,L):
+        return(1/np.sqrt(M*(1+z)**3 + K*(1+z)**2 + L))
+    
+    DC = c/H0 * integrate.quad(func,0,z,args=(OM,OK,OL))
+    # Compute comovin distance
+    DL = DC*(1+z)
+    # Compute luminosity disance
+    Dl, Dl_err = DL[0], DL[1]
+    print("Distance to soruce from integration of z")
+    print(Dl.to(u.Mpc),"Mpc (+/-)",Dl_err.to(u.Mpc))
+    m_u = unumpy.uarray(m,merr)
+
+    # Compute K-correction term
+    K = -2.5*np.log10(1+z)
+
+    M = m_u - 5*np.log10((Dl.to(u.pc)).value/((10*u.pc)).value) - K
+    return(unumpy.nominal_values(M),unumpy.std_devs(M))
+
+def FluxDensity(mx,mx_err,wave,fwave0=None,fnu0=None):
+    '''
+    Computes the flux density per unit wavelength for
+    specified apparent magntiude and effective wavelength
+    Zero point flux density per unit wavelnegth or 
+    zero point flux density per unit frequency is must 
+    be provided for conversion.
+    '''
+    from uncertainties import unumpy
+    # Constants
+    c = 2.99792458e10 #cm/s
+    
+    # Convert wavelenght from um to cm
+    # wave = wave*1e-4
+    # Wavelength is already in cm
+    wave = wave.value
+    # Initialize uncertainties arrays
+    m = unumpy.uarray(mx,mx_err)
+    
+    # Check if flux density per unit wavelength is provided
+    if fwave0 is not None:
+        print("Computing flux densities per unit wavelength")
+        f = fwave0*np.power(10,(-m/2.5)) # erg/s/cm2/A
+        # Dae-sik error
+        ferr = np.sqrt(0.921)*unumpy.nominal_values(f)*mx_err
+    elif fnu0 is not None:
+        # Convert from fnu to fwave
+        print("Computing flux densities per sunit wavelegth")
+        f = (c/wave**2)*fnu0*np.power(10,-m/2.5)
+
+        # Convert from erg/s/cm2/cm -> erg/s/cm2/A
+        f = f/1e8
+        ferr = np.sqrt(0.921)*unumpy.nominal_values(f)*mx_err
+    else:
+        print("Must provide a zero point flux density")
+    
+    return(unumpy.nominal_values(f),unumpy.std_devs(f),ferr)
+    # return(unumpy.nominal_values(f),ferr)
+
+def BBPlank(x,T):  
+    import astropy.units as u 
+    h = 6.6260755e-27 *u.erg *u.s #erg*s
+    c = 2.99792458e10 *u.cm / u.s #cm/s
+    k = 1.380658e-16 * u.erg /u.K #erg/K
+    term1 = 2*np.pi*h*c**2/x**5
+    term2 = 1/(np.exp(h*c/x/k/T)-1)
+    return term1 * term2
+
+def FluxWave(L,T,wave,D,z):
+    #########################################################################
+    # Function returns the corresponding monochromatic flux density         #
+    # per unit wavelenth (cgs) for given bolometric luminosity, temperature #
+    # central wavelength, and distance to source, temperature is corrected  #
+    # for redshift anc color according to Sapir & Waxman model              #
+    #########################################################################
+    # Inputs: L -> erg/s, T -> K, wave -> cm, D -> cm                       #
+    #########################################################################
+    # Output: Fwave -> ergs/s/cm2/cm                                        #
+    #########################################################################
+    import astropy.units as u
+    sb = 5.67051e-5 * u.erg/u.s/u.cm**2/u.K**4 #erg/s/cm2/K4
+    # Convert from Tph to Tcol
+    Tcol = 1.1*T # for convective envelopes
+    # Intrinsic temperature of blackbody
+    Tz = Tcol/(1+z)
+    term1 = L/4/np.pi/D**2/sb/Tz**4
+    return(term1*BBPlank(wave,Tz))
+
+
+def Fnu2Fwave(fnu,wave):
+    # Convert flux densities per unit frequency
+    # to flux densities per unit wavelength
+    c = 2.99792458e10 #cm/s
+    return (c/wave**2)*fnu
+
+############################# Function for Simultanous Fitting #############################
+def One_Model(t, R, vs, M, fp, w):
+    '''Uses the extended model from sapir & waxman to get the 
+    flux density for 'w' band'''
+    from Helpers import FluxWave
+    import astropy.units as u
+    # Compute the early T and L from S&W
+    kappa = 1 # Set kappa 0.34 cgs
+    Trw = 1.61 * (vs**2*t**2/(fp*M*kappa))**0.027 *R**(1/4) / kappa**(1/4) *t**(-1/2) # eV
+    Lrw = 2.0 * 10**42 *(vs*t**2/(fp*M*kappa))**(-0.086) * (vs**2*R)/kappa  # erg/s
+    Trw = Trw*u.eV
+    Lrw = Lrw*u.erg/u.s
+
+    # We can also compute the ejecta energy
+    # E = (vs*10**(8.5)/1.05/fp**(-2*0.191))**2*M
+
+    # Calculate envelope mass from my derivation (check notes)
+    Menv = fp**2*M/(fp**2+1)
+
+    #####################################################################################
+    # Apply supression factor to Lbol at later times
+    # Compute transparency time tr
+    # Comments: To compute the transparency time  we need to know the envelope mass,
+    # this is a very hard paremter to get because it depends on the progenitors density
+    # structure. However, from SW they provide bounds for such quatity 0.1< Mc/Menv< 10
+    # and for convective effective envelopes we have that fp = sqrt(Mc/Menv), hence 
+    # tr = 13 * fp**(0.191/2) * (Menv)**(3/4) * (M/Menv)**(1/4) * (E/10**(51))**(-1/4) # days
+    #####################################################################################
+
+    tr = 19.5*(kappa*Menv/vs)**(1/2) #days
+    Lsup = Lrw*0.94*np.exp(-(1.67*t/tr)**0.8) # erg/s
+
+    # Compute planar luminosity
+    # Transform time from days to h
+    th = t*24 # hr
+    Lp = 2.974*10**(42)*(R**(0.462)*vs**(0.602))/(fp*M*kappa)**(0.0643)*(R**2)/(kappa)*th**(-4/3) # erg/s
+    Lp = Lp * u.erg/u.s
+    # Define composite Luminosity
+    Lc = Lp + Lsup
+    
+    # Compute planar temperature
+    Tp = 6.937*(R**(0.1155)*vs**(0.1506))/(fp**(0.01609)*M**(0.01609)*kappa**(0.2661))*th**(-1/3) # eV
+    Tp = Tp*u.eV
+
+    # Get composite temperature by taking the lowest temperature values
+    Tc = []
+    for i in range(len(Tp)):
+        if Tp[i].value < Trw[i].value:
+            Tc.append(Tp[i].value)
+        else:
+            Tc.append(Trw[i].value)
+    # Apply color correction to composite temperature
+    Tc = np.array(Tc)
+
+    # Apply color factor fT=1.1
+    Tc = 1.1*Tc*u.eV
+    
+    # Convert temperature from eV to K
+    kB = 8.617333262*1e-5*u.eV/u.K #eV/K
+    Tc = Tc/kB
+    Trw = Trw/kB
+
+    # Define redshift
+    #z = 0.08739904944703399 # New analysis shows new redshift
+    z = 0.08918
+
+    # Define distance
+    #Dl = 377.044*1e6 * u.pc # In case of using apparent magnitude
+    Dl = 385.2*1e6 * u.pc #Updated luminosity distance
+    # Dl = 10 * u.pc # If using absolute magnitudes
+
+    Dl = Dl.to(u.cm) # Convert to cm
+    # L: erg/s, T: K, w: cm, Dl: cm
+    fpred = FluxWave(Lc,Tc,w,Dl,z) # My function returns erg/s/cm2/cm
+    # fpred_sub = FluxWave(Lsup,Trw,w,Dl,z)
+    # Convert to erg/s/cm2/A
+    fpred = fpred.to(u.erg/u.s/u.cm**2/u.AA)
+    # fpred_sub = fpred_sub.to(u.erg/u.s/u.cm**2/u.AA)
+    #return(fpred_sub.value)
+    return(fpred.value)
