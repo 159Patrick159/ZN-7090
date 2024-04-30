@@ -119,13 +119,13 @@ def Martinez_cooling_Asymmetric2(Bmags,Vmags,BmagsErr,VmagsErr,threshold_err,dat
         
     return(mbol_med,mbol_UErr,mbol_LErr,color_mean,color_std,BC_med,BC_UErr,BC_LErr,to_remove)
 
-def Layman2Luminosity(mag1,mag2,mag1err,mag2err,c0,c1,c2,z,dist=None):
+def Layman2Luminosity(mag1,mag2,mag1err,mag2err,c0,c1,c2,z,r,dist=None):
     
     '''Applies Laymans' bolometric correction of a second order polynomial
     to mag1 and mag2 to find the apparent bolometric correction. Consequently 
     it uses given redshift to compute the absolute magntiude and bolometric
     luminosity. Function uses IQR if dist is assymetric "A" or std if 
-    distribution is symmetric "S".'''
+    distribution is symmetric "S". And r is the color range of the bolometric correction'''
     
     import numpy as np
     import scipy.integrate as integrate
@@ -164,6 +164,21 @@ def Layman2Luminosity(mag1,mag2,mag1err,mag2err,c0,c1,c2,z,dist=None):
     L_LErr = []
     L_mean = []
     L_Err = []
+
+    # COMMENT THIS OUT IF YOU WISH TO IGNORE COLOR BOUNDS
+    # This chunk of code will select the magnitudes
+    # which are within the specified color range 
+    # Where r[0] is the lower bound and r[1] is the upper bound
+    mag1c = mag1[np.where(np.logical_and(mag1-mag2 >= r[0], mag1-mag2 <= r[1]))]
+    mag2c = mag2[np.where(np.logical_and(mag1-mag2 >= r[0], mag1-mag2 <= r[1]))]
+    mag1errc = mag1err[np.where(np.logical_and(mag1-mag2 >= r[0], mag1-mag2 <= r[1]))]
+    mag2errc = mag2err[np.where(np.logical_and(mag1-mag2 >= r[0], mag1-mag2 <= r[1]))]
+
+    mag1 = mag1c
+    mag2 = mag2c
+    mag1err = mag1errc
+    mag2err = mag2errc
+    ##################################################################################
     
     flag = False
     for i in range(len(mag1)):
@@ -297,15 +312,15 @@ def Layman_BC(mag1,mag2,mag1err,mag2err,range_eff,c0,c1,c2,rms,dates):
     test_colors = mag1 - mag2
     good_mags = []
     for i,color in enumerate(test_colors):
-        if color < upper and color > lower:
+        if color <= upper and color >= lower:
             good_mags.append(i)
             
     # Only select the pair mags that are within the effective range of color
-    #mag1 = mag1[good_mags]
-    #mag2 = mag2[good_mags]
+    # mag1 = mag1[good_mags]
+    # mag2 = mag2[good_mags]
     
     # And the corresponding dates
-    #dates = dates[good_mags]
+    dates = dates[good_mags]
     
     color_med = []
     color_std = []
