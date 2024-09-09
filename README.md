@@ -2,7 +2,7 @@
 Pyhton scripts and routines used in the upcoming publication for studying young supernova detected by the Korean Microlensing Telescope Network. This repository serves as an archive for all the techinques I've developed for studying said event. I would draw attention to the script `ZN7090_MCMC_Log.py` in the `Scripts` folder where I use the thermonuclear shock breakout model from [Morag et. al. (2023)](https://academic.oup.com/mnras/article/522/2/2764/7086123) to conduct a simultaneous mulit-band fit to determine the progenitor parameters of the supernova. This script calls on the auxilary functions from `Helpers.py` and `MCMC_Routines.py` to transform the data and modularize the code.
 
 <p align='center'>
-    <img src="Scripts/Plots/Fig-ZN7090-Detections" title="KMTNet B-band Images Post and Prior First Detection" height="80%" width="80%">
+    <img src="Scripts/Plots/Fig-ZN7090-Detections.png" title="KMTNet B-band Images Post and Prior First Detection" height="80%" width="80%">
 </p>
 
 ### Discovery and Early Photometry
